@@ -8,30 +8,11 @@ export default async function handler(req, res) {
     lastName,
     email,
     location,
-    message
+    message,
+    userIP
   } = req.body;
 
-  // Get real user IP from headers
-  const getClientIP = (req) => {
-    const forwarded = req.headers['x-forwarded-for'];
-    if (forwarded) {
-      return forwarded.split(',')[0].trim();
-    }
-    
-    const realIP = req.headers['x-real-ip'];
-    if (realIP) {
-      return realIP;
-    }
-    
-    const cfIP = req.headers['cf-connecting-ip'];
-    if (cfIP) {
-      return cfIP;
-    }
-    
-    return req.socket?.remoteAddress || req.connection?.remoteAddress || 'Unknown';
-  };
-
-  const ip = getClientIP(req);
+  const ip = userIP || "Not captured";
 
   const telegramMessage = `
 📩 New Contact Form Submission
@@ -47,7 +28,6 @@ ${message || "N/A"}
 
 🌐 Technical Info:
 IP Address: ${ip}
-User Agent: ${req.headers['user-agent'] || 'N/A'}
 Timestamp: ${new Date().toLocaleString()}
 `;
 
