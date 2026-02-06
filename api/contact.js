@@ -3,36 +3,32 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Only POST requests allowed" });
   }
 
-  const { firstName, lastName, email, location, message } = req.body;
+  const {
+    firstName,
+    lastName,
+    email,
+    location,
+    message
+  } = req.body;
 
-  // Enhanced IP detection for Vercel
+  // Get real user IP from headers
   const getClientIP = (req) => {
-    // Vercel-specific headers (most reliable)
-    const vercelIP = req.headers['x-vercel-forwarded-for'];
-    if (vercelIP) {
-      return vercelIP.split(',')[0].trim();
-    }
-
-    // Standard forwarded headers
     const forwarded = req.headers['x-forwarded-for'];
     if (forwarded) {
       return forwarded.split(',')[0].trim();
     }
-
-    // Fallback headers
+    
     const realIP = req.headers['x-real-ip'];
     if (realIP) {
       return realIP;
     }
-
-    // CF-Connecting-IP (if using Cloudflare)
+    
     const cfIP = req.headers['cf-connecting-ip'];
     if (cfIP) {
       return cfIP;
     }
-
-    // Last resort
-    return req.socket?.remoteAddress || 'Unknown';
+    
+    return req.socket?.remoteAddress || req.connection?.remoteAddress || 'Unknown';
   };
 
   const ip = getClientIP(req);
@@ -52,6 +48,7 @@ ${message || "N/A"}
 🌐 Technical Info:
 IP Address: ${ip}
 User Agent: ${req.headers['user-agent'] || 'N/A'}
+Timestamp: ${new Date().toLocaleString()}
 `;
 
   try {
@@ -62,8 +59,7 @@ User Agent: ${req.headers['user-agent'] || 'N/A'}
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: process.env.TG_CHAT_ID,
-        text: telegramMessage,
-        parse_mode: "HTML" // Optional: allows basic formatting
+        text: telegramMessage
       })
     });
 
@@ -71,10 +67,11 @@ User Agent: ${req.headers['user-agent'] || 'N/A'}
       throw new Error(`Telegram API error: ${response.status}`);
     }
 
-    res.status(200).json({ success: true });
+    return res.status(200).json({ success: true });
+    
   } catch (error) {
     console.error("Error sending to Telegram:", error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: "Failed to send message",
       success: false 
     });
