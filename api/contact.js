@@ -27,7 +27,6 @@ Location: ${location || "N/A"}
 ${message || "N/A"}
 
 🌐 Technical Info:
-IP Address: ${ip}
 Timestamp: ${new Date().toLocaleString()}
 `;
 
